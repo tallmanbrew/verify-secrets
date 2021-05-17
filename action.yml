@@ -17,4 +17,4 @@ runs:
         touch token.txt
         echo $TOKEN > token.txt
         chmod +x .github/secret_check.sh
-        ./${{ github.action_path }}/.github/secret_check.sh
+        ./${{ github.action_path }}/secret_check.sh
