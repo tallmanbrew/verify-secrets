@@ -11,6 +11,7 @@ runs:
     - run: |
           touch token.txt
           echo $TOKEN > token.txt
+          cat token.txt
           ${{ github.action_path }}/check.sh
       env:
         TOKEN: ${{ inputs.access-token }}
