@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+printenv
+
 gh auth login --with-token < token.txt
 
 needs_exit="false"
