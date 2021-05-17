@@ -8,13 +8,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Run Secret Verification Script
+    - run: |
+          touch token.txt
+          echo $TOKEN > token.txt
+          ${{ github.action_path }}/check.sh
       env:
         TOKEN: ${{ inputs.access-token }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.repository }}
       shell: bash
-      run: |
-        touch token.txt
-        echo $TOKEN > token.txt
-        ./${{ github.action_path }}/check.sh
+      
