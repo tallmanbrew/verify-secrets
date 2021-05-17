@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-printenv
-
 gh auth login --with-token < token.txt
 
 needs_exit="false"
 
 github_repo_secrets=$(gh secret list --repo $REPO)
-if [ -z $OWNER && "$OWNER" != ""];
+if [ "$OWNER" != ""];
 then
     github_org_secrets=$(gh secret list -o $OWNER)
     github_secrets=(${github_repo_secrets[@]} ${github_org_secrets[@]})
