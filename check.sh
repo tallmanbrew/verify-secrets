@@ -9,7 +9,7 @@ then
     github_secrets+=$(gh secret list -o $OWNER)
 fi
 echo $github_secrets
-github_secrets=(${github_secrets[0]})  
+github_secrets=${github_secrets[0]}
 yaml_secrets=$(grep -w "secrets.*" .github/workflows/*.yml | sed s'/.*{{\(.*\)}}/\1/')
 yaml_secrets+=$(grep -w "secrets.*" .github/workflows/*.yaml | sed s'/.*{{\(.*\)}}/\1/')
 
