@@ -23,7 +23,7 @@ runs:
           sh ${{ github.action_path }}/check.sh
       env:
         TOKEN: ${{ inputs.access-token }}
-        OWNER: ${{ inputs.owner }}
+        # OWNER: ${{ inputs.owner }}
         REPO: ${{ inputs.repo }}
       shell: bash
       
