@@ -5,6 +5,14 @@ inputs:
     description: 'Personal Access Token'
     required: true
     default: ''
+  repo:
+    description: 'Name of Repo to scan'
+    required: true
+    default: ''
+  owner:
+    description: 'Repo Owner if Organization'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
@@ -15,7 +23,7 @@ runs:
           sh ${{ github.action_path }}/check.sh
       env:
         TOKEN: ${{ inputs.access-token }}
-        OWNER: ${{ github.repository_owner }}
-        REPO: ${{ github.repository }}
+        OWNER: ${{ inputs.owner }}
+        REPO: ${{ inputs.repo }}
       shell: bash
       

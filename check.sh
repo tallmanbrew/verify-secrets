@@ -4,7 +4,10 @@ gh auth login --with-token < token.txt
 needs_exit="false"
 
 github_secrets=$(gh secret list --repo $REPO)
-github_secrets+=$(gh secret list -o $OWNER)
+if [[ $OWNER != '']];
+then
+    github_secrets+=$(gh secret list -o $OWNER)
+fi
 github_secrets=(${github_secrets[0]})  
 yaml_secrets=$(grep -w "secrets.*" .github/workflows/*.yml | sed s'/.*{{\(.*\)}}/\1/')
 yaml_secrets+=$(grep -w "secrets.*" .github/workflows/*.yaml | sed s'/.*{{\(.*\)}}/\1/')
