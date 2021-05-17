@@ -11,14 +11,11 @@ then
 else
     github_secrets=(${github_repo_secrets[@]})
 fi
-echo $github_secrets
 
 yaml_secrets=$(grep -w "{{ secrets.* }}" .github/workflows/*.yaml | sed s'/.*{{\(.*\)}}/\1/')
-echo $yaml_secrets
 yml_secrets=$(grep -w "{{ secrets.* }}" .github/workflows/*.yml | sed s'/.*{{\(.*\)}}/\1/')
 
 all_yaml_secrets=(${yaml_secrets[@]} ${yml_secrets[@]})
-
 
 for yaml_secret in ${all_yaml_secrets[@]};
 do     
