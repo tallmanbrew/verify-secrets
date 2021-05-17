@@ -7,9 +7,9 @@ github_repo_secrets=$(gh secret list --repo $REPO)
 if [ -z ${OWNER} && "${OWNER}" != ""];
 then
     github_org_secrets=$(gh secret list -o $OWNER)
-    github_secrets=(${github_repo_secrets[@]} ${github_org_secrets[@]})
+    github_secrets=$(${github_repo_secrets[@]} ${github_org_secrets[@]})
 else
-    github_secrets=(${github_repo_secrets[@]})
+    github_secrets=$(${github_repo_secrets[@]})
 fi
 echo $github_secrets
 
@@ -17,7 +17,7 @@ yaml_secrets=$(grep -w "{{ secrets.* }}" .github/workflows/*.yaml | sed s'/.*{{\
 echo $yaml_secrets
 yml_secrets=$(grep -w "{{ secrets.* }}" .github/workflows/*.yml | sed s'/.*{{\(.*\)}}/\1/')
 
-all_yaml_secrets=(${yaml_secrets[@]} ${yml_secrets[@]})
+all_yaml_secrets=$(${yaml_secrets[@]} ${yml_secrets[@]})
 
 
 for yaml_secret in ${all_yaml_secrets[@]};
