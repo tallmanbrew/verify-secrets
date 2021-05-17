@@ -4,7 +4,7 @@ gh auth login --with-token < token.txt
 needs_exit="false"
 
 github_secrets=$(gh secret list --repo $REPO)
-if [ ${OWNER} != ''];
+if [ ! -z ${OWNER} || "${OWNER}" != ""];
 then
     github_secrets+=$(gh secret list -o $OWNER)
 fi
