@@ -13,6 +13,7 @@ runs:
         TOKEN: ${{ inputs.access-token }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.repository }}
+      shell: bash
       run: |
         touch token.txt
         echo $TOKEN > token.txt
