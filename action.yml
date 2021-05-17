@@ -12,7 +12,7 @@ runs:
           touch token.txt
           echo $TOKEN > token.txt
           cat token.txt
-          ${{ github.action_path }}/check.sh
+          sh ${{ github.action_path }}/check.sh
       env:
         TOKEN: ${{ inputs.access-token }}
         OWNER: ${{ github.repository_owner }}
