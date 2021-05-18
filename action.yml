@@ -1,6 +1,9 @@
 name: 'Verify Secrets'
 description: 'This action will verify all secrets used in yaml files are defined as github secrets.'
 author: Chris Tallman
+branding:
+  icon: 'user'
+  color: 'red'
 inputs:
   access-token:  # id of input
     description: 'Personal Access Token'
