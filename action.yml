@@ -1,14 +1,13 @@
 name: 'Verify Secrets'
-description: 'This action will verify all secrets used in yaml files are defined in github.'
+description: 'This action will verify all secrets used in yaml files are defined as github secrets.'
+author: Chris Tallman
 inputs:
   access-token:  # id of input
     description: 'Personal Access Token'
     required: true
-    default: ''
   repo:
     description: 'Name of Repo to scan'
     required: true
-    default: ''
   owner:
     description: 'Repo Owner if Organization'
     required: false
