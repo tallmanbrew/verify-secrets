@@ -1,4 +1,4 @@
-if command -v gh > /dev/null
+if ! command -v gh > /dev/null
 then
     echo "GitHub CLI not installed, attempting to install"
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
