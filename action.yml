@@ -18,6 +18,8 @@ runs:
   using: "composite"
   steps:
     - run: |
+          chmod +x ${{ github.action_path }}/install-gh.sh
+          ${{ github.action_path }}/install-gh.sh
           touch token.txt
           echo $TOKEN > token.txt
           chmod +x ${{ github.action_path }}/check.sh
