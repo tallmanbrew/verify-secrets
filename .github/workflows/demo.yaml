@@ -23,6 +23,7 @@ jobs:
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         NON_EXISTANT_SECRET: ${{ secrets.I_DONT_EXISTS }}
+        GITHUB: ${{ secrets.GITHUB_TOKEN }}
     - name: Verify Secrets
       uses: tallmanbrew/verify-secrets@v1beta
       with:
