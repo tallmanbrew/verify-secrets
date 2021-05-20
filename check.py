@@ -13,17 +13,17 @@ org_url = f'https://api.github.com/orgs/{OWNER}/actions/secrets?per_page=100'
 
 headers = {'Authorization': f'token {TOKEN}'}
 
-repos = requests.get(repos_url, headers=headers)
 orgs = requests.get(org_url, headers=headers)
+repos = requests.get(repos_url, headers=headers)
 
-json_repos_secrets = repos.json()
 json_orgs_secrets = orgs.json()
+json_repos_secrets = repos.json()
 
 stored_secrets = []
-if json_orgs_secrets:
+if 'secrets' in json_orgs_secrets:
     for secret in json_orgs_secrets['secrets']:
         stored_secrets.append(secret['name'])
-if json_repos_secrets:
+if 'secrets' in json_repos_secrets:
     for secret in json_repos_secrets['secrets']:
         stored_secrets.append(secret['name'])
 
