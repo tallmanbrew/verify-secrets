@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-gh auth login --with-token < token.txt
-
 needs_exit="false"
 
-github_repo_secrets=$(gh secret list --repo $REPO)
+github_repo_secrets=$(curl -H "Accept: application/vnd.github.v3+json" -u svcghc:$TOKEN https://api.github.com/repos/${REPO}/actions/secrets?per_page=100 | jq '.')
+repo_secrets_json=$(jq '.secrets | .[].name' <<< "$github_repo_secrets")
+repo_secrets_list=$(sed -e 's/^"//' -e 's/"$//' <<< "$repo_secrets_json")
 if [ ! -z "${OWNER}" ];
 then
-    github_org_secrets=$(gh secret list -o $OWNER)
-    github_secrets=(${github_repo_secrets[@]} ${github_org_secrets[@]})
-else
-    github_secrets=(${github_repo_secrets[@]})
+    github_org_secrets=$(curl -H "Accept: application/vnd.github.v3+json" -u svcghc:$TOKEN https://api.github.com/orgs/${OWNER}/actions/secrets?per_page=100 | jq '.')
+    org_secrets_json=$(jq '.secrets | .[].name' <<< "$github_org_secrets")
+    org_secrets_list=$(sed -e 's/^"//' -e 's/"$//' <<< "$org_secrets_json")
 fi
 
 yaml_secrets=$(grep -w "{{ secrets.* }}" .github/workflows/*.yaml | sed s'/.*{{\(.*\)}}/\1/')
@@ -23,11 +22,11 @@ do
     then
         if [[ ! "${yaml_secret}" =~ "GITHUB_TOKEN" && ! "${yaml_secret}" =~ "matrix" ]];
         then
-            secret=(${yaml_secret//./ })
-            if [[ ! " ${github_secrets[@]} " =~ " ${secret[1]} " ]]; 
+            secret=(${yaml_secret//./ });
+            if [[ ! " ${repo_secrets_list[@]} " =~ " ${secret[1]} " ]]; 
             then
-                echo ${secret[1]}
-                needs_exit="true"
+                echo ${secret[1]};
+                needs_exit="true";
             fi
         fi
     fi

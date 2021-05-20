@@ -1,0 +1,99 @@
+name: Deploy DEV API
+on:
+  push:
+    branches: [ develop ]
+jobs:
+  build:
+    runs-on: [ self-hosted, Linux, becks-runners ]
+    strategy:
+      matrix:
+        servers: [ server1 ]
+        include:
+          - servers: server1
+            remote_host: BECKS_DEV_NDE_1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Notify slack start
+      uses: voxmedia/github-action-slack-notify-build@v1
+      id: slack
+      with:
+        channel: boss-alerts
+        status: STARTING
+        color: good
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        NON_EXISTANT_SECRET: ${{ secrets.I_DONT_EXISTS }}
+    - name: Verify Secrets
+      uses: tallmanbrew/verify-secrets@v1beta
+      with:
+        access-token: ${{ secrets.VERIFICATION_TOKEN }}
+        repo: ${{ github.repository }}
+        owner: ${{ github.repository_owner }}
+    - name: User Nodejs
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14
+        registry-url: https://npm.pkg.github.com/
+        scope: '@BecksDevTeam'
+    - name: npm install
+      run: npm ci
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - name: update version
+      run: |
+        echo "Build version: 1.0.0-alpha.${{ github.run_number }}"
+        npm version "1.0.0-alpha.${{ github.run_number }}" --no-git-tag-version
+    - name: Setup SSH identity
+      env:
+        REMOTE_HOST: ${{ secrets[matrix.remote_host] }}
+        REMOTE_USER: ${{ secrets.LR_SSH_SRV_ACCOUNT_NIX }}
+        REMOTE_KEY: ${{ secrets.LR_SSH_SRV_ACCOUNT_KEY }}
+        REMOTE_DESTINATION: ${{ secrets.REMOTE_NDE_DESTINATION_PATH }}
+      shell: bash
+      run: |
+        mkdir ~/.ssh
+        chmod 0700 ~/.ssh
+        echo "$REMOTE_KEY" >> ~/.ssh/id_rsa
+        chmod 400 ~/.ssh/id_rsa
+        cat >> ~/.ssh/config <<END
+        Host machine
+          HostName $REMOTE_HOST
+          User $REMOTE_USER
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking=no
+        END
+    - name: Sync build folder and destination folder
+      shell: bash
+      env:
+        REMOTE_HOST: ${{ secrets[matrix.remote_host] }}
+        REMOTE_USER: ${{ secrets.LR_SSH_SRV_ACCOUNT_NIX }}
+        REMOTE_DESTINATION: ${{ secrets.REMOTE_NDE_DESTINATION_PATH }}
+      run: |
+        ssh machine
+        rsync -ar --delete /runner/_work/BeckSalesAPI/BeckSalesAPI/ "$REMOTE_USER"@"$REMOTE_HOST":"$REMOTE_DESTINATION" --exclude='.git' --filter='P .env'
+    - name: Restart pm2
+      shell: bash
+      run: |
+        ssh machine 'pm2 restart BeckSalesAPI'
+    - name: Notify slack success
+      if: success()
+      env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      uses: voxmedia/github-action-slack-notify-build@v1
+      with:
+          # Updates existing message from the first step
+          message_id: ${{ steps.slack.outputs.message_id }}
+          channel: boss-alerts
+          status: SUCCESS
+          color: good
+    - name: Notify slack fail
+      if: failure()
+      env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      uses: voxmedia/github-action-slack-notify-build@v1
+      with:
+          # Updates existing message from the first step
+          message_id: ${{ steps.slack.outputs.message_id }}
+          channel: boss-alerts
+          status: FAILED
+          color: danger
