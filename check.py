@@ -20,10 +20,16 @@ json_repos_secrets = repos.json()
 json_orgs_secrets = orgs.json()
 
 stored_secrets = []
-for secret in json_orgs_secrets['secrets']:
-    stored_secrets.append(secret['name'])
-for secret in json_repos_secrets['secrets']:
-    stored_secrets.append(secret['name'])
+if json_orgs_secrets:
+    for secret in json_orgs_secrets['secrets']:
+        stored_secrets.append(secret['name'])
+if json_repos_secrets:
+    for secret in json_repos_secrets['secrets']:
+        stored_secrets.append(secret['name'])
+
+if not stored_secrets:
+    print('No secrets found defined in repo')
+    exit(1)
 
 for filename in os.listdir(DIRECTORY):
     if filename.endswith(".yaml") or filename.endswith(".yml"):
