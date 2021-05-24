@@ -22,7 +22,7 @@ runs:
   using: "composite"
   steps:
     - run: |
-          python3 ${{ github.action_path }}/check.py
+          python3 $GITHUB_ACTION_PATH/check.py
       env:
         TOKEN: ${{ inputs.access-token }}
         OWNER: ${{ inputs.owner }}
