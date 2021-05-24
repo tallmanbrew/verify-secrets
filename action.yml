@@ -14,6 +14,10 @@ inputs:
   owner:
     description: 'Repo Owner if Organization'
     required: false
+  shell:
+    description: 'Set shell for cmd to run in, (bash, cmd)'
+    required: false
+    default: bash
 runs:
   using: "composite"
   steps:
@@ -23,5 +27,5 @@ runs:
         TOKEN: ${{ inputs.access-token }}
         OWNER: ${{ inputs.owner }}
         REPO: ${{ inputs.repo }}
-      shell: bash
+      shell: ${{ inputs.shell }}
       
