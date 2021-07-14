@@ -18,8 +18,14 @@ runs:
   using: "composite"
   steps:
     - run: |
-          pip3 install -r $GITHUB_ACTION_PATH/requirements.txt
-          python3 $GITHUB_ACTION_PATH/check.py
+          if pip3 -v &> /dev/null
+          then
+            pip3 install -r $GITHUB_ACTION_PATH/requirements.txt
+            python3 $GITHUB_ACTION_PATH/check.py
+          else
+            pip install -r $GITHUB_ACTION_PATH/requirements.txt
+            python $GITHUB_ACTION_PATH/check.py
+          fi
       env:
         TOKEN: ${{ inputs.access-token }}
         OWNER: ${{ inputs.owner }}
