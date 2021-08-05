@@ -27,3 +27,15 @@ If you use github secrets in your workflows use this action to verify all secret
   ```text
   ${{ github.repository_owner }}
   ```
+
+## Debugging locally in VSCode
+
+1. In the root of the respository run the following commands to setup the virtual environment
+```
+python3 -m venv .venv
+source ./.venv/bin/activate  
+pip3 install -r requirements.txt
+```
+
+1. Click the debug sidebar button
+1. Click the green run button to the left of the dropdown with the `Python: Entry Point` text
