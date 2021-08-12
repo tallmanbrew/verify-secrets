@@ -1,6 +1,6 @@
 # firenza/verify-secrets
 
-If you use github secrets in your workflows use this action to verify all secrets are defined at either org or repo level.
+If you use github secrets in your workflows use this action to verify all secrets are accessible to this repository via environment, organization, or repository defined secrets.
 
 ## Prerequisites
 - This action requires a personal access token with admin rights to repo
