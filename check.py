@@ -10,7 +10,7 @@ DIRECTORY = '.github/workflows'
 headers = {'Authorization': f'token {TOKEN}'}
 
 print(f'Reading repository')
-repo_url = f'https://api.github.com/repos/{OWNER}/{REPO}'
+repo_url = f'https://api.github.com/repos/{REPO}'
 repo_response = requests.get(repo_url, headers=headers)
 repo_response.raise_for_status()
 
@@ -24,12 +24,12 @@ org_secrets_response = requests.get(org_secrets_url, headers=headers)
 org_secrets_response.raise_for_status()
 
 print(f'Reading repository secrets')
-repo_secrets_url = f'https://api.github.com/repos/{OWNER}/{REPO}/actions/secrets?per_page=100'
+repo_secrets_url = f'https://api.github.com/repos/{REPO}/actions/secrets?per_page=100'
 repo_secrets_response = requests.get(repo_secrets_url, headers=headers)
 repo_secrets_response.raise_for_status() 
 
 print(f'Reading environments')
-environments_url = f'https://api.github.com/repos/{OWNER}/{REPO}/environments'
+environments_url = f'https://api.github.com/repos/{REPO}/environments'
 environments_response = requests.get(environments_url, headers=headers)
 environments_response.raise_for_status()
 
@@ -41,7 +41,7 @@ environments_response_json = environments_response.json()
 for environment in environments_response_json['environments']:
     environment_name = environment['name']
 
-    environment_secrets_url = f'https://api.github.com/repos/{OWNER}/{REPO}/environments/{environment_name}/secrets'
+    environment_secrets_url = f'https://api.github.com/repos/{REPO}/environments/{environment_name}/secrets'
     print(f'Reading environment secrets for environment {environment_name}')
     environment_secrets = requests.get(environment_secrets_url, headers=headers)
     environment_secrets.raise_for_status()
