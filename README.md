@@ -1,4 +1,4 @@
-# tallmanbrew/verify-secrets
+# firenza/verify-secrets
 
 If you use github secrets in your workflows use this action to verify all secrets are defined at either org or repo level.
 
@@ -8,8 +8,8 @@ If you use github secrets in your workflows use this action to verify all secret
 
 ## Usage
 ```yml
-- name: Verify Secrets
-  uses: tallmanbrew/verify-secrets@v1
+- name: Verify Github Secrets
+  uses: firenza/verify-github-secrets@v1
     with:
       access-token: ${{ secrets.PAT }}
       repo: ${{ github.repository }}
