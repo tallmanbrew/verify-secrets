@@ -1,4 +1,4 @@
-name: 'Verify Secrets'
+name: 'Verify Github Secrets'
 description: 'This action will verify all secrets used in yaml files are defined as github secrets associated with the repository'
 author: Chris Tallman & Chad Oftedahl
 branding:
