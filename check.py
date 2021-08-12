@@ -3,37 +3,29 @@ import re
 import requests
 
 TOKEN = os.getenv('TOKEN')
-OWNER = os.getenv('OWNER')
-REPO = os.getenv('REPO')
+OWNER_AND_REPO = os.getenv('OWNER_AND_REPO')
+ORG = os.getenv('ORG')
 DIRECTORY = '.github/workflows'
+
+secrets_tied_to_repo = []
 
 headers = {'Authorization': f'token {TOKEN}'}
 
-print(f'Reading repository')
-repo_url = f'https://api.github.com/repos/{OWNER}/{REPO}'
-repo_response = requests.get(repo_url, headers=headers)
-repo_response.raise_for_status()
-
-repo_json = repo_response.json()
-
-repo_is_private = repo_json['private']
-
-print(f'Reading org secrets')
-org_secrets_url = f'https://api.github.com/orgs/{OWNER}/actions/secrets?per_page=100'
-org_secrets_response = requests.get(org_secrets_url, headers=headers)
-org_secrets_response.raise_for_status()
-
 print(f'Reading repository secrets')
-repo_secrets_url = f'https://api.github.com/repos/{OWNER}/{REPO}/actions/secrets?per_page=100'
+repo_secrets_url = f'https://api.github.com/repos/{OWNER_AND_REPO}/actions/secrets?per_page=100'
 repo_secrets_response = requests.get(repo_secrets_url, headers=headers)
-repo_secrets_response.raise_for_status() 
+repo_secrets_response.raise_for_status()
+
+repo_secrets_response_json = repo_secrets_response.json()
+
+if 'secrets' in repo_secrets_response_json:
+    for secret in repo_secrets_response_json['secrets']:
+        secrets_tied_to_repo.append(secret['name'])
 
 print(f'Reading environments')
-environments_url = f'https://api.github.com/repos/{OWNER}/{REPO}/environments'
+environments_url = f'https://api.github.com/repos/{OWNER_AND_REPO}/environments'
 environments_response = requests.get(environments_url, headers=headers)
 environments_response.raise_for_status()
-
-secrets_tied_to_repo = []
 
 # Read in the secrets for each environment
 environments_response_json = environments_response.json()
@@ -41,7 +33,7 @@ environments_response_json = environments_response.json()
 for environment in environments_response_json['environments']:
     environment_name = environment['name']
 
-    environment_secrets_url = f'https://api.github.com/repos/{OWNER}/{REPO}/environments/{environment_name}/secrets'
+    environment_secrets_url = f'https://api.github.com/repos/{OWNER_AND_REPO}/environments/{environment_name}/secrets'
     print(f'Reading environment secrets for environment {environment_name}')
     environment_secrets = requests.get(environment_secrets_url, headers=headers)
     environment_secrets.raise_for_status()
@@ -51,33 +43,42 @@ for environment in environments_response_json['environments']:
     for secret in environment_secrets_json['secrets']:
         secrets_tied_to_repo.append(secret['name'])
 
-# See which org secrets are assigned to this repository
-org_secrets_response_json = org_secrets_response.json()
+if ORG is not None and ORG != "":
+    print(f'Reading repository')
+    repo_url = f'https://api.github.com/repos/{OWNER_AND_REPO}'
+    repo_response = requests.get(repo_url, headers=headers)
+    repo_response.raise_for_status()
 
-for org_secret in org_secrets_response_json['secrets']:
-    org_secret_name = org_secret['name']
+    repo_json = repo_response.json()
 
-    if org_secret['visibility'] == 'all' or org_secret['visibility'] == 'private' and repo_is_private:
-        secrets_tied_to_repo.append(org_secret_name)
-    elif org_secret['visibility'] == 'selected':
-        # NOTE: This if an org secret is selectively assigned to > 100 repos this will
-        # not cover that scenario
-        org_secret_repositories_url = f'https://api.github.com/orgs/{OWNER}/actions/secrets/{org_secret_name}/repositories?per_page=100'
-        print(f'Reading repositories that are associated with org secret {org_secret_name}')
-        org_secret_repositories_response = requests.get(org_secret_repositories_url, headers=headers)
-        org_secret_repositories_response.raise_for_status()
+    repo_is_private = repo_json['private']
 
-        org_secret_repositories_json = org_secret_repositories_response.json()
+    print(f'Reading org secrets')
+    org_secrets_url = f'https://api.github.com/orgs/{ORG}/actions/secrets?per_page=100'
+    org_secrets_response = requests.get(org_secrets_url, headers=headers)
+    org_secrets_response.raise_for_status()
 
-        for repository in org_secret_repositories_json['repositories']:
-            if repository['name'] == REPO:
-                secrets_tied_to_repo.append(org_secret_name)
+    # See which org secrets are assigned to this repository
+    org_secrets_response_json = org_secrets_response.json()
 
-repo_secrets_response_json = repo_secrets_response.json()
+    for org_secret in org_secrets_response_json['secrets']:
+        org_secret_name = org_secret['name']
 
-if 'secrets' in repo_secrets_response_json:
-    for secret in repo_secrets_response_json['secrets']:
-        secrets_tied_to_repo.append(secret['name'])
+        if org_secret['visibility'] == 'all' or org_secret['visibility'] == 'private' and repo_is_private:
+            secrets_tied_to_repo.append(org_secret_name)
+        elif org_secret['visibility'] == 'selected':
+            # NOTE: This if an org secret is selectively assigned to > 100 repos this will
+            # not cover that scenario
+            org_secret_repositories_url = f'https://api.github.com/orgs/{ORG}/actions/secrets/{org_secret_name}/repositories?per_page=100'
+            print(f'Reading repositories that are associated with org secret {org_secret_name}')
+            org_secret_repositories_response = requests.get(org_secret_repositories_url, headers=headers)
+            org_secret_repositories_response.raise_for_status()
+
+            org_secret_repositories_json = org_secret_repositories_response.json()
+
+            for repository in org_secret_repositories_json['repositories']:
+                if repository['full_name'] == OWNER_AND_REPO:
+                    secrets_tied_to_repo.append(org_secret_name)
 
 missing_secrets = []
 

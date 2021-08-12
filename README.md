@@ -1,6 +1,6 @@
 # firenza/verify-secrets
 
-If you use github secrets in your workflows use this action to verify all secrets are defined at either org or repo level.
+If you use github secrets in your workflows use this action to verify all secrets are accessible to this repository via environment, organization, or repository defined secrets.
 
 ## Prerequisites
 - This action requires a personal access token with admin rights to repo
@@ -12,18 +12,18 @@ If you use github secrets in your workflows use this action to verify all secret
   uses: firenza/verify-github-secrets@v1
     with:
       access-token: ${{ secrets.PAT }}
-      repo: ${{ github.repository }}
-      owner: ${{ github.repository_owner }}
+      owner-and-repo: ${{ github.repository }}
+      org: ${{ github.repository_owner }}
 ```
 
 ## Inputs
-- `access-token`: (Required) Personal Access Token with repo admin rights, if under an org PAT requires Org admin rights
+- `access-token`: (Required) Personal Access Token with repo admin rights, if under an org PAT requires Org and Repo admin rights
 
-- `repo`: (Required) Set to repository name 
+- `owner-and-repo`: (Required) Set to repository name (E.G. Firenza/verify-secrets)
   ```text
   ${{ github.repository }}
   ```
-- `owner`: (Optional) Only used if repo under org
+- `org`: (Optional) Only used if repo under org
   ```text
   ${{ github.repository_owner }}
   ```

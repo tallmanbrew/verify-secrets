@@ -5,14 +5,14 @@ branding:
   icon: 'user'
   color: 'red'
 inputs:
-  access-token:  # id of input
-    description: 'Personal Access Token'
+  access-token:
+    description: 'Personal access token'
     required: true
-  repo:
-    description: 'Name of Repo to scan'
+  owner-and-repo:
+    description: 'Name of owner and repo to scan'
     required: true
-  owner:
-    description: 'Repo Owner if Organization'
+  org:
+    description: 'Organization'
     required: false
 runs:
   using: "composite"
@@ -32,7 +32,7 @@ runs:
         python3 $GITHUB_ACTION_PATH/check.py
       env:
         TOKEN: ${{ inputs.access-token }}
-        OWNER: ${{ inputs.owner }}
-        REPO: ${{ inputs.repo }}
+        OWNER_AND_REPO: ${{ inputs.owner-and-repo }}
+        ORG: ${{ inputs.org }}
       shell: bash
       
