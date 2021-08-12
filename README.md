@@ -17,7 +17,7 @@ If you use github secrets in your workflows use this action to verify all secret
 ```
 
 ## Inputs
-- `access-token`: (Required) Personal Access Token with repo admin rights, if under an org PAT requires Org admin rights
+- `access-token`: (Required) Personal Access Token with repo admin rights, if under an org PAT requires Org and Repo admin rights
 
 - `owner-and-repo`: (Required) Set to repository name (E.G. Firenza/verify-secrets)
   ```text
