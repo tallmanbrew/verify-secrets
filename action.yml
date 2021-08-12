@@ -1,6 +1,6 @@
-name: 'Verify Secrets'
-description: 'This action will verify all secrets used in yaml files are defined as github secrets.'
-author: Chris Tallman
+name: 'Verify GitHub Secrets'
+description: 'This action will verify all secrets used in yaml files are defined as github secrets associated with the repository'
+author: Chris Tallman & Chad Oftedahl
 branding:
   icon: 'user'
   color: 'red'
