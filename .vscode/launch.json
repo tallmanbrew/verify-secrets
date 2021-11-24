@@ -5,11 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Entry Point",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/check.py",
-            "console": "integratedTerminal"
+          "type": "node",
+          "request": "launch",
+          "name": "Jest",
+          "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+          "args": [
+              "-i"
+          ],
+           "skipFiles": [
+            "<node_internals>/**/*.js", "node_modules",
+          ]
         }
-    ]
+      ]
 }
