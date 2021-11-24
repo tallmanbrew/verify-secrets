@@ -22,4 +22,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: ./
       with:
-        secrets: '{}'
+        secrets: '{"SECRET_1": "SECRET_1_VALUE", "SECRET_2": "SECRET_2_VALUE"}'
+    env:
+      SECRET_1: ${{ secrets.SECRET_1}}
+      SECRET_2: ${{ secrets.SECRET_2 }}
