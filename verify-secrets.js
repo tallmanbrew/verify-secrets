@@ -38,10 +38,10 @@ let verify_secrets = async function (secrets) {
   let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
 
   if (missingSecretNames.size > 0) {
-    core.info('\n!!! MISSING SECRETS !!\n------------------------');
+    core.error('\n!!! MISSING SECRETS !!\n------------------------');
 
     for (const missingSecretName of Array.from(missingSecretNames).sort()) {
-      core.info(missingSecretName);
+      core.error(missingSecretName);
     }
 
     core.setFailed();

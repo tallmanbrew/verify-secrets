@@ -1,10 +1,9 @@
-const verify_secrets = require('./verify_secrets');
+const verify_secrets = require('./verify-secrets');
+const core = require('@actions/core');
 
-test('throws invalid number', async () => {
-  await expect('foo').toBe('foo')
-});
+jest.mock("@actions/core");
 
-test('throws invalid number', async () => {
+test('all secrets available', async () => {
   // Arrange
   var secretsObj = new Object();
   secretsObj.SECRET_1 = "SECRET_1_VALUE";
@@ -13,6 +12,22 @@ test('throws invalid number', async () => {
 
   // Act
   await verify_secrets(secretsJson);
-  // Assert
 
+  // Assert
+  expect(core.setFailed).not.toHaveBeenCalled();
+});
+
+
+test('missing secret', async () => {
+  // Arrange
+  var secretsObj = new Object();
+  secretsObj.SECRET_1 = "SECRET_1_VALUE";
+  var secretsJson = JSON.stringify(secretsObj);
+
+  // Act
+  await verify_secrets(secretsJson);
+
+  // Assert
+  expect(core.setFailed).toHaveBeenCalled();
+  expect(core.error).toHaveBeenCalledWith("SECRET_2");
 });

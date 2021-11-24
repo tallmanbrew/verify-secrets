@@ -1555,7 +1555,7 @@ exports.debug = debug; // for test
 
 /***/ }),
 
-/***/ 881:
+/***/ 633:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const core = __nccwpck_require__(186);
@@ -1598,10 +1598,10 @@ let verify_secrets = async function (secrets) {
   let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
 
   if (missingSecretNames.size > 0) {
-    core.info('\n!!! MISSING SECRETS !!\n------------------------');
+    core.error('\n!!! MISSING SECRETS !!\n------------------------');
 
     for (const missingSecretName of Array.from(missingSecretNames).sort()) {
-      core.info(missingSecretName);
+      core.error(missingSecretName);
     }
 
     core.setFailed();
@@ -1734,7 +1734,7 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(186);
-const verify_secrets = __nccwpck_require__(881);
+const verify_secrets = __nccwpck_require__(633);
 
 async function run() {
   try {

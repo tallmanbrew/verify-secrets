@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const verify_secrets = require('./verify_secrets');
+const verify_secrets = require('./verify-secrets');
 
 async function run() {
   try {
