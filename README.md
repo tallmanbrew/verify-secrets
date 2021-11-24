@@ -4,6 +4,9 @@ If you use github secrets in your workflows use this action to verify all secret
 
 ## Usage
 ```yml
+# Need to get repo files to parse workflows for secrets
+- uses: actions/checkout@v2
+
 - name: Verify Github Secrets
   uses: firenza/verify-github-secrets@v2
   with:
