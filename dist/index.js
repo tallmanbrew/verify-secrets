@@ -1555,6 +1555,45 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 881:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const core = __nccwpck_require__(186);
+// const fs = require('fs');
+
+let verify_secrets = function (secrets) {
+   
+    const parsedSecrets = JSON.parse(secrets);
+    core.info(parsedSecrets);
+    // let secretNames = []
+    // for(var attributeName in parsedSecrets){
+    //   core.info(`Secret ${attributeName}`)
+    //   secretNames.push(attributeName);
+    // }
+
+    // let referencedSecretNames = new Set()
+
+    // const workflowFiles = await fs.promises.readdir( ".github/workflows" );
+
+    // for(const workflowFile of workflowFiles){
+    //   workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
+    //   workflowFileContent = workflowFileBuffer.toString();
+
+    //   const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
+    //   let matches = [...workflowFileContent.matchAll(secretRegex)];
+
+    //   for(const match of matches){
+    //     referencedSecretNames.add(match[1]);
+    //   }
+
+    //   core.info(workflowFileContent);
+    // }
+};
+
+module.exports = verify_secrets;
+
+/***/ }),
+
 /***/ 357:
 /***/ ((module) => {
 
@@ -1677,20 +1716,13 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(186);
+const verify_secrets = __nccwpck_require__(881);
 
 async function run() {
   try {
     const secrets = core.getInput('secrets');
-    const parsedSecrets = JSON.parse(secrets);
 
-    let secretNames = []
-    for(var attributeName in parsedSecrets){
-      core.info(`Secret ${attributeName}`)
-      secretNames.push(attributeName);
-    }
-
-    //let referencedSecretNames = []
-
+    await verify_secrets(secrets);
   }
   catch (error) {
     core.setFailed(error.message);
@@ -1698,7 +1730,6 @@ async function run() {
 }
 
 run()
-
 })();
 
 module.exports = __webpack_exports__;

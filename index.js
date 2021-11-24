@@ -1,18 +1,11 @@
 const core = require('@actions/core');
+const verify_secrets = require('./verify_secrets');
 
 async function run() {
   try {
     const secrets = core.getInput('secrets');
-    const parsedSecrets = JSON.parse(secrets);
 
-    let secretNames = []
-    for(var attributeName in parsedSecrets){
-      core.info(`Secret ${attributeName}`)
-      secretNames.push(attributeName);
-    }
-
-    //let referencedSecretNames = []
-
+    await verify_secrets(secrets);
   }
   catch (error) {
     core.setFailed(error.message);
