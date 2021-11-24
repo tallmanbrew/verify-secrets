@@ -1589,10 +1589,10 @@ let verify_secrets = async function (secrets) {
       }
     }
 
-    core.info('Secrets referenced in workflows\n------------------------')
+    core.info('\nSecrets referenced in workflows\n------------------------')
     
-    for(referencedSecretName in Array.from(referencedSecretNames).sort()){
-      core.info(referencedSecretNames);
+    for(const referencedSecretName of Array.from(referencedSecretNames).sort()){
+      core.info(referencedSecretName);
     }
 };
 
