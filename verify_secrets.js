@@ -4,7 +4,6 @@ const fs = require('fs');
 let verify_secrets = async function (secrets) {
    
     const parsedSecrets = JSON.parse(secrets);
-    core.info(parsedSecrets);
 
     let secretNames = []
     for(var attributeName in parsedSecrets){
@@ -26,9 +25,9 @@ let verify_secrets = async function (secrets) {
       for(const match of matches){
         referencedSecretNames.add(match[1]);
       }
-
-      core.info(workflowFileContent);
     }
+
+    core.info(`Referenced secret names ${referencedSecretNames}`)
 };
 
 module.exports = verify_secrets;
