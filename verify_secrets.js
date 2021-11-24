@@ -5,6 +5,8 @@ let verify_secrets = async function (secrets) {
    
     const parsedSecrets = JSON.parse(secrets);
 
+    core.info('Secrets available\n------------------------')
+
     let secretNames = []
     for(var attributeName in parsedSecrets){
       core.info(`Secret ${attributeName}`)
@@ -27,7 +29,11 @@ let verify_secrets = async function (secrets) {
       }
     }
 
-    core.info(`Referenced secret names ${referencedSecretNames}`)
+    core.info('Secrets referenced in workflows\n------------------------')
+    
+    for(referencedSecretName in Array.from(referencedSecretNames).sort()){
+      core.info(referencedSecretNames);
+    }
 };
 
 module.exports = verify_secrets;
