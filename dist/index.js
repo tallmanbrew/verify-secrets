@@ -1685,6 +1685,7 @@ async function run() {
 
     let secretNames = []
     for(var attributeName in parsedSecrets){
+      core.info(`Secret ${attributeName}`)
       secretNames.push(attributeName);
     }
 
