@@ -1559,35 +1559,36 @@ exports.debug = debug; // for test
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const core = __nccwpck_require__(186);
-// const fs = require('fs');
+const fs = __nccwpck_require__(747);
 
-let verify_secrets = function (secrets) {
+let verify_secrets = async function (secrets) {
    
     const parsedSecrets = JSON.parse(secrets);
     core.info(parsedSecrets);
-    // let secretNames = []
-    // for(var attributeName in parsedSecrets){
-    //   core.info(`Secret ${attributeName}`)
-    //   secretNames.push(attributeName);
-    // }
 
-    // let referencedSecretNames = new Set()
+    let secretNames = []
+    for(var attributeName in parsedSecrets){
+      core.info(`Secret ${attributeName}`)
+      secretNames.push(attributeName);
+    }
 
-    // const workflowFiles = await fs.promises.readdir( ".github/workflows" );
+    let referencedSecretNames = new Set()
 
-    // for(const workflowFile of workflowFiles){
-    //   workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
-    //   workflowFileContent = workflowFileBuffer.toString();
+    const workflowFiles = await fs.promises.readdir( ".github/workflows" );
 
-    //   const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
-    //   let matches = [...workflowFileContent.matchAll(secretRegex)];
+    for(const workflowFile of workflowFiles){
+      workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
+      workflowFileContent = workflowFileBuffer.toString();
 
-    //   for(const match of matches){
-    //     referencedSecretNames.add(match[1]);
-    //   }
+      const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
+      let matches = [...workflowFileContent.matchAll(secretRegex)];
 
-    //   core.info(workflowFileContent);
-    // }
+      for(const match of matches){
+        referencedSecretNames.add(match[1]);
+      }
+
+      core.info(workflowFileContent);
+    }
 };
 
 module.exports = verify_secrets;
