@@ -5,34 +5,9 @@ branding:
   icon: 'user'
   color: 'red'
 inputs:
-  access-token:
-    description: 'Personal access token'
+  secrets: 
+    description: 'Secrets JSON from workflow'
     required: true
-  owner-and-repo:
-    description: 'Name of owner and repo to scan'
-    required: true
-  org:
-    description: 'Organization'
-    required: false
 runs:
-  using: "composite"
-  steps:
-    - id: install-pipenv
-      name: Install pipenv
-      run: |
-        if ! command -v pip3 &> /dev/null
-        then
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-        fi
-      shell: bash
-
-    - run: |
-        pip3 install -r $GITHUB_ACTION_PATH/requirements.txt
-        python3 $GITHUB_ACTION_PATH/check.py
-      env:
-        TOKEN: ${{ inputs.access-token }}
-        OWNER_AND_REPO: ${{ inputs.owner-and-repo }}
-        ORG: ${{ inputs.org }}
-      shell: bash
-      
+  using: 'node12'
+  main: 'dist/index.js'
