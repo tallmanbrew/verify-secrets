@@ -1680,7 +1680,16 @@ const core = __nccwpck_require__(186);
 
 async function run() {
   try {
-      console.log('ello guvna');
+    const secrets = core.getInput('secrets');
+    const parsedSecrets = JSON.parse(secrets);
+
+    let secretNames = []
+    for(var attributeName in parsedSecrets){
+      secretNames.push(attributeName);
+    }
+
+    //let referencedSecretNames = []
+
   }
   catch (error) {
     core.setFailed(error.message);

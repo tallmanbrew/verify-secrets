@@ -10,8 +10,8 @@ async function run() {
       secretNames.push(attributeName);
     }
 
-    let referencedSecretNames = []
-    
+    //let referencedSecretNames = []
+
   }
   catch (error) {
     core.setFailed(error.message);
