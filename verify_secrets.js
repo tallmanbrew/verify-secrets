@@ -1,11 +1,11 @@
 const core = require('@actions/core');
 const fs = require('fs');
 
-let verify_secrets = function (secrets) {
+let verify_secrets = async function (secrets) {
    
     const parsedSecrets = JSON.parse(secrets);
     core.info(parsedSecrets);
-    
+
     let secretNames = []
     for(var attributeName in parsedSecrets){
       core.info(`Secret ${attributeName}`)
