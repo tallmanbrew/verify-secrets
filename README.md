@@ -8,7 +8,7 @@ If you use github secrets in your workflows use this action to verify all secret
 - uses: actions/checkout@v2
 
 - name: Verify Github Secrets
-  uses: firenza/verify-github-secrets@v2
+  uses: firenza/verify-secrets@v2
   with:
     secrets: ${{ toJSON(secrets) }}
 ```
