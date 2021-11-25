@@ -1,7 +1,68 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 351:
+/***/ 633:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const core = __nccwpck_require__(274);
+const fs = __nccwpck_require__(747);
+
+let verify_secrets = async function (secrets) {
+
+  const parsedSecrets = JSON.parse(secrets);
+
+  let secretNames = new Set()
+
+  for (var attributeName in parsedSecrets) {
+    secretNames.add(attributeName);
+  }
+
+  core.info('Secrets available\n------------------------')
+  
+  for (const secretName of Array.from(secretNames).sort()) {
+    core.info(secretName);
+  }
+
+  let referencedSecretNames = new Set()
+
+  const workflowFiles = await fs.promises.readdir(".github/workflows");
+
+  for (const workflowFile of workflowFiles) {
+    workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
+    workflowFileContent = workflowFileBuffer.toString();
+
+    const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
+    let matches = [...workflowFileContent.matchAll(secretRegex)];
+
+    for (const match of matches) {
+      referencedSecretNames.add(match[1]);
+    }
+  }
+
+  core.info('\nSecrets referenced in workflows\n------------------------')
+  
+  for (const referencedSecretName of Array.from(referencedSecretNames).sort()) {
+    core.info(referencedSecretName);
+  }
+
+  let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
+
+  if (missingSecretNames.size > 0) {
+    core.error('\n!!! MISSING SECRETS !!\n------------------------');
+
+    for (const missingSecretName of Array.from(missingSecretNames).sort()) {
+      core.error(missingSecretName);
+    }
+
+    core.setFailed();
+  }
+};
+
+module.exports = verify_secrets;
+
+/***/ }),
+
+/***/ 54:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28,7 +89,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issue = exports.issueCommand = void 0;
 const os = __importStar(__nccwpck_require__(87));
-const utils_1 = __nccwpck_require__(278);
+const utils_1 = __nccwpck_require__(661);
 /**
  * Commands
  *
@@ -100,7 +161,7 @@ function escapeProperty(s) {
 
 /***/ }),
 
-/***/ 186:
+/***/ 274:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -135,12 +196,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
-const command_1 = __nccwpck_require__(351);
-const file_command_1 = __nccwpck_require__(717);
-const utils_1 = __nccwpck_require__(278);
+const command_1 = __nccwpck_require__(54);
+const file_command_1 = __nccwpck_require__(290);
+const utils_1 = __nccwpck_require__(661);
 const os = __importStar(__nccwpck_require__(87));
 const path = __importStar(__nccwpck_require__(622));
-const oidc_utils_1 = __nccwpck_require__(41);
+const oidc_utils_1 = __nccwpck_require__(850);
 /**
  * The code to exit an action
  */
@@ -419,7 +480,7 @@ exports.getIDToken = getIDToken;
 
 /***/ }),
 
-/***/ 717:
+/***/ 290:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -450,7 +511,7 @@ exports.issueCommand = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__nccwpck_require__(747));
 const os = __importStar(__nccwpck_require__(87));
-const utils_1 = __nccwpck_require__(278);
+const utils_1 = __nccwpck_require__(661);
 function issueCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
@@ -468,7 +529,7 @@ exports.issueCommand = issueCommand;
 
 /***/ }),
 
-/***/ 41:
+/***/ 850:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -484,9 +545,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OidcClient = void 0;
-const http_client_1 = __nccwpck_require__(925);
-const auth_1 = __nccwpck_require__(702);
-const core_1 = __nccwpck_require__(186);
+const http_client_1 = __nccwpck_require__(879);
+const auth_1 = __nccwpck_require__(811);
+const core_1 = __nccwpck_require__(274);
 class OidcClient {
     static createHttpClient(allowRetry = true, maxRetry = 10) {
         const requestOptions = {
@@ -552,7 +613,7 @@ exports.OidcClient = OidcClient;
 
 /***/ }),
 
-/***/ 278:
+/***/ 661:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -599,7 +660,7 @@ exports.toCommandProperties = toCommandProperties;
 
 /***/ }),
 
-/***/ 702:
+/***/ 811:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -665,7 +726,7 @@ exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHand
 
 /***/ }),
 
-/***/ 925:
+/***/ 879:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -673,7 +734,7 @@ exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHand
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const http = __nccwpck_require__(605);
 const https = __nccwpck_require__(211);
-const pm = __nccwpck_require__(443);
+const pm = __nccwpck_require__(66);
 let tunnel;
 var HttpCodes;
 (function (HttpCodes) {
@@ -1092,7 +1153,7 @@ class HttpClient {
         if (useProxy) {
             // If using proxy, need tunnel
             if (!tunnel) {
-                tunnel = __nccwpck_require__(294);
+                tunnel = __nccwpck_require__(951);
             }
             const agentOptions = {
                 maxSockets: maxSockets,
@@ -1210,7 +1271,7 @@ exports.HttpClient = HttpClient;
 
 /***/ }),
 
-/***/ 443:
+/***/ 66:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -1275,15 +1336,15 @@ exports.checkBypass = checkBypass;
 
 /***/ }),
 
-/***/ 294:
+/***/ 951:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-module.exports = __nccwpck_require__(219);
+module.exports = __nccwpck_require__(30);
 
 
 /***/ }),
 
-/***/ 219:
+/***/ 30:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -1555,63 +1616,6 @@ exports.debug = debug; // for test
 
 /***/ }),
 
-/***/ 633:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const core = __nccwpck_require__(186);
-const fs = __nccwpck_require__(747);
-
-let verify_secrets = async function (secrets) {
-
-  const parsedSecrets = JSON.parse(secrets);
-
-  core.info('Secrets available\n------------------------')
-
-  let secretNames = new Set()
-  for (var attributeName in parsedSecrets) {
-    core.info(attributeName)
-    secretNames.add(attributeName);
-  }
-
-  let referencedSecretNames = new Set()
-
-  const workflowFiles = await fs.promises.readdir(".github/workflows");
-
-  for (const workflowFile of workflowFiles) {
-    workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
-    workflowFileContent = workflowFileBuffer.toString();
-
-    const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
-    let matches = [...workflowFileContent.matchAll(secretRegex)];
-
-    for (const match of matches) {
-      referencedSecretNames.add(match[1]);
-    }
-  }
-
-  core.info('\nSecrets referenced in workflows\n------------------------')
-
-  for (const referencedSecretName of Array.from(referencedSecretNames).sort()) {
-    core.info(referencedSecretName);
-  }
-
-  let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
-
-  if (missingSecretNames.size > 0) {
-    core.error('\n!!! MISSING SECRETS !!\n------------------------');
-
-    for (const missingSecretName of Array.from(missingSecretNames).sort()) {
-      core.error(missingSecretName);
-    }
-
-    core.setFailed();
-  }
-};
-
-module.exports = verify_secrets;
-
-/***/ }),
-
 /***/ 357:
 /***/ ((module) => {
 
@@ -1733,7 +1737,7 @@ module.exports = require("util");
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const core = __nccwpck_require__(186);
+const core = __nccwpck_require__(274);
 const verify_secrets = __nccwpck_require__(633);
 
 async function run() {
