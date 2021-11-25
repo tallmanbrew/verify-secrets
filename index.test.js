@@ -29,5 +29,5 @@ test('missing secret', async () => {
 
   // Assert
   expect(core.setFailed).toHaveBeenCalled();
-  expect(core.error).toHaveBeenCalledWith("SECRET_2");
+  expect(core.error).toHaveBeenCalledWith('Secret "SECRET_2" is not defined');
 });
