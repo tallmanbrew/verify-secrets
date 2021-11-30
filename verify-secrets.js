@@ -1,30 +1,33 @@
 const core = require('@actions/core');
 const fs = require('fs');
 
-let verify_secrets = async function (secrets, secretNames) {
+let verify_secrets = async function (secretsJson, secretNamesJson) {
 
-  if (!secrets && !secretNames) {
-    core.error("You must provide either the 'secrets' or 'secret_names' inputs")
+  if (!secretsJson && !secretNamesJson) {
+    core.setFailed("You must provide either the 'secrets' or 'secret_names' inputs")
+    return
   }
 
-  if (secrets && secretNames) {
-    core.error("You cannot provide both the 'secrets' and 'secret_names' inputs")
+  if (secretsJson && secretNamesJson) {
+    core.setFailed("You cannot provide both the 'secrets' and 'secret_names' inputs")
+    return
   }
 
   let secretNames = new Set()
 
-  if (secrets){
-    const parsedSecrets = JSON.parse(secrets);
+  if (secretsJson){
+    const parsedSecrets = JSON.parse(secretsJson);
 
     for (var attributeName in parsedSecrets) {
       secretNames.add(attributeName);
     }
   }
   else{
-    const parsedSecretNames = JSON.parse(secretNames);
+    const parsedSecretNames = JSON.parse(secretNamesJson);
 
-    
-
+    for (var attributeName in parsedSecretNames) {
+      secretNames.add(parsedSecretNames[attributeName]);
+    }
   }
 
   core.info('Secrets available\n------------------------')
