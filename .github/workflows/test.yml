@@ -16,7 +16,20 @@ jobs:
     - run: npm test
 
   # test action works running from the graph
-  test:
+  test_secret_json:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: ./
+      with:
+        secrets: ${{ toJSON(secrets) }}
+    env:
+      SECRET_1: ${{ secrets.SECRET_1}}
+      SECRET_2: ${{ secrets.SECRET_2 }}
+  
+        # test action works running from the graph
+  test_secret_names_json:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -31,11 +44,9 @@ jobs:
         content="${content//$'\r'/'%0D'}"
         echo "::set-output name=json_keys::$content"
 
-
-
     - uses: ./
       with:
-        secrets: echo '${{ toJSON(secrets) }}' | jq 'keys'
+        secret_names: ${{ steps.secret_json_keys.outputs.json_keys  }}
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
