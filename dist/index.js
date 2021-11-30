@@ -1585,11 +1585,20 @@ let verify_secrets = async function (secrets) {
     workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
     workflowFileContent = workflowFileBuffer.toString();
 
-    const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
-    let matches = [...workflowFileContent.matchAll(secretRegex)];
+    const isReusableWorkflowRegex = /\:\s+workflow_call\:/g
 
-    for (const match of matches) {
-      referencedSecretNames.add(match[1]);
+    // Reusable workflows only use secrets passed to them so skip
+    // parsing these files
+    if (workflowFileContent.match(isReusableWorkflowRegex)) {
+      core.info(`Skipping ${workflowFile} as it is a reusable workflow`)  
+    }
+    else{
+      const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
+      let matches = [...workflowFileContent.matchAll(secretRegex)];
+  
+      for (const match of matches) {
+        referencedSecretNames.add(match[1]);
+      }
     }
   }
 
