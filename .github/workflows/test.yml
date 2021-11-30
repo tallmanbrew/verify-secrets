@@ -20,9 +20,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
+    - name: Get secret JSON keys
+      id: secret_json_keys
+      run: |
+        content=`echo '${{ toJSON(secrets) }}' | jq 'keys'`
+        # Squish JSON into one line
+        content="${content//'%'/'%25'}"
+        content="${content//$'\n'/'%0A'}"
+        content="${content//$'\r'/'%0D'}"
+        echo "::set-output name=json_keys::$content"
+
+
+
     - uses: ./
       with:
-        secrets: '{"SECRET_1": "SECRET_1_VALUE", "SECRET_2": "SECRET_2_VALUE"}'
+        secrets: echo '${{ toJSON(secrets) }}' | jq 'keys'
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
