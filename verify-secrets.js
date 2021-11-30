@@ -17,6 +17,8 @@ let verify_secrets = async function (secrets) {
     core.info(secretName);
   }
 
+  core.info('')
+
   let referencedSecretNames = new Set()
 
   const workflowFiles = await fs.promises.readdir(".github/workflows");
@@ -25,11 +27,20 @@ let verify_secrets = async function (secrets) {
     workflowFileBuffer = await fs.promises.readFile(`.github/workflows/${workflowFile}`);
     workflowFileContent = workflowFileBuffer.toString();
 
-    const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
-    let matches = [...workflowFileContent.matchAll(secretRegex)];
+    const isReusableWorkflowRegex = /\:\s+workflow_call\:/g
 
-    for (const match of matches) {
-      referencedSecretNames.add(match[1]);
+    // Reusable workflows only use secrets passed to them so skip
+    // parsing these files
+    if (workflowFileContent.match(isReusableWorkflowRegex)) {
+      core.info(`Skipping reusable workflow ${workflowFile}`)  
+    }
+    else{
+      const secretRegex = /\{\{\s*secrets\.(.*?)\s*\}/g;
+      let matches = [...workflowFileContent.matchAll(secretRegex)];
+  
+      for (const match of matches) {
+        referencedSecretNames.add(match[1]);
+      }
     }
   }
 
@@ -42,6 +53,7 @@ let verify_secrets = async function (secrets) {
   let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
 
   if (missingSecretNames.size > 0) {
+    core.info('')
 
     for (const missingSecretName of Array.from(missingSecretNames).sort()) {
       core.error(`Secret "${missingSecretName}" is not defined`);
