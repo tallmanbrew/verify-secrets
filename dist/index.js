@@ -1561,18 +1561,37 @@ exports.debug = debug; // for test
 const core = __nccwpck_require__(186);
 const fs = __nccwpck_require__(147);
 
-let verify_secrets = async function (secrets) {
+let verify_secrets = async function (secretsJson, secretNamesJson) {
 
-  const parsedSecrets = JSON.parse(secrets);
+  if (!secretsJson && !secretNamesJson) {
+    core.setFailed("You must provide either the 'secrets' or 'secret_names' inputs")
+    return
+  }
+
+  if (secretsJson && secretNamesJson) {
+    core.setFailed("You cannot provide both the 'secrets' and 'secret_names' inputs")
+    return
+  }
 
   let secretNames = new Set()
 
-  for (var attributeName in parsedSecrets) {
-    secretNames.add(attributeName);
+  if (secretsJson){
+    const parsedSecrets = JSON.parse(secretsJson);
+
+    for (var attributeName in parsedSecrets) {
+      secretNames.add(attributeName);
+    }
+  }
+  else{
+    const parsedSecretNames = JSON.parse(secretNamesJson);
+
+    for (var attributeName in parsedSecretNames) {
+      secretNames.add(parsedSecretNames[attributeName]);
+    }
   }
 
   core.info('Secrets available\n------------------------')
-  
+    
   for (const secretName of Array.from(secretNames).sort()) {
     core.info(secretName);
   }
@@ -1753,9 +1772,10 @@ const verify_secrets = __nccwpck_require__(633);
 
 async function run() {
   try {
-    const secrets = core.getInput('secrets');
+    const secretsJson = core.getInput('secrets');
+    const secretNamesJson = core.getInput('secret_names');
 
-    await verify_secrets(secrets);
+    await verify_secrets(secretsJson, secretNamesJson);
   }
   catch (error) {
     core.setFailed(error.message);
