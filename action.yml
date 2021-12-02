@@ -7,7 +7,13 @@ branding:
 inputs:
   secrets: 
     description: 'Secrets JSON from workflow'
-    required: true
+    required: false
+  secret_names:
+    description: 'Secret name JSON'
+    required: false
+  exclusions:
+    description: 'Secrets to skip verifying'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'
