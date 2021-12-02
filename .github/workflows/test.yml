@@ -69,7 +69,7 @@ jobs:
     - uses: ./
       with:
         secret_names: ${{ steps.secret_json_keys.outputs.json_keys }}
-        exclusions: UNAVAILABLE_SECRET
+        exclusions: UNAVAILABLE_SECRET,SOME_OTHER_SECRET_TO_EXCLUDE
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
