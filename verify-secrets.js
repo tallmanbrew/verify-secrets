@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const fs = require('fs');
 
-secrets = async function (secretsJson, secretNamesJson, exclusions) {
+verify_secrets = async function (secretsJson, secretNamesJson, exclusions) {
 
   if (!secretsJson && !secretNamesJson) {
     core.setFailed("You must provide either the 'secrets' or 'secret_names' inputs")
@@ -79,19 +79,19 @@ secrets = async function (secretsJson, secretNamesJson, exclusions) {
 
     for(const exclusion_item of exclusion_items){
       core.info(exclusion_item);
-      exclusion_secret_names.add()
+      exclusion_secret_names.add(exclusion_item);
     }
   }
 
   let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
+  // Filter out excluded secret names
+  missingSecretNames = new Set([...missingSecretNames].filter(x => !exclusion_secret_names.has(x)));
 
   if (missingSecretNames.size > 0) {
     core.info('')
 
     for (const missingSecretName of Array.from(missingSecretNames).sort()) {
-      if(!exclusion_secret_names.has(missingSecretName)){
-        core.error(`Secret "${missingSecretName}" is not defined`);
-      }
+      core.error(`Secret "${missingSecretName}" is not defined`);
     }
 
     core.setFailed();
