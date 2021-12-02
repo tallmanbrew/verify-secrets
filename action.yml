@@ -12,7 +12,7 @@ inputs:
     description: 'Secret name JSON'
     required: false
   exclusions:
-    description: 'Secrets to skip verifying'
+    description: 'Comma separated string of secrets to skip verifying'
     required: false
 runs:
   using: 'node12'
