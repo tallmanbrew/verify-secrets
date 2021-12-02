@@ -15,14 +15,36 @@ jobs:
     - run: npm ci
     - run: npm test
 
-  # test action works running from the graph
-  test:
+  test_secret_json:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
     - uses: ./
       with:
-        secrets: '{"SECRET_1": "SECRET_1_VALUE", "SECRET_2": "SECRET_2_VALUE"}'
+        secrets: ${{ toJSON(secrets) }}
+    env:
+      SECRET_1: ${{ secrets.SECRET_1}}
+      SECRET_2: ${{ secrets.SECRET_2 }}
+  
+  test_secret_names_json:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Get secret JSON keys
+      id: secret_json_keys
+      run: |
+        content=`echo '${{ toJSON(secrets) }}' | jq 'keys'`
+        # Squish JSON into one line
+        content="${content//'%'/'%25'}"
+        content="${content//$'\n'/'%0A'}"
+        content="${content//$'\r'/'%0D'}"
+        echo "::set-output name=json_keys::$content"
+
+    - uses: ./
+      with:
+        secret_names: ${{ steps.secret_json_keys.outputs.json_keys }}
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
