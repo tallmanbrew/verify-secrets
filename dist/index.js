@@ -1561,7 +1561,7 @@ exports.debug = debug; // for test
 const core = __nccwpck_require__(186);
 const fs = __nccwpck_require__(147);
 
-let verify_secrets = async function (secretsJson, secretNamesJson) {
+verify_secrets = async function (secretsJson, secretNamesJson, exclusions) {
 
   if (!secretsJson && !secretNamesJson) {
     core.setFailed("You must provide either the 'secrets' or 'secret_names' inputs")
@@ -1629,7 +1629,23 @@ let verify_secrets = async function (secretsJson, secretNamesJson) {
     core.info(referencedSecretName);
   }
 
+  exclusion_secret_names = new Set()
+
+  if (exclusions) {
+    
+    core.info('\nSecrets excluded from verification\n------------------------')
+    
+    exclusion_items = exclusions.split(',');
+
+    for(const exclusion_item of exclusion_items){
+      core.info(exclusion_item);
+      exclusion_secret_names.add(exclusion_item);
+    }
+  }
+
   let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
+  // Filter out excluded secret names
+  missingSecretNames = new Set([...missingSecretNames].filter(x => !exclusion_secret_names.has(x)));
 
   if (missingSecretNames.size > 0) {
     core.info('')
@@ -1772,10 +1788,12 @@ const verify_secrets = __nccwpck_require__(633);
 
 async function run() {
   try {
+
     const secretsJson = core.getInput('secrets');
     const secretNamesJson = core.getInput('secret_names');
+    const exclusions = core.getInput('exclusions');
 
-    await verify_secrets(secretsJson, secretNamesJson);
+    await verify_secrets(secretsJson, secretNamesJson, exclusions);
   }
   catch (error) {
     core.setFailed(error.message);
