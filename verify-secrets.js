@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const fs = require('fs');
 
-let verify_secrets = async function (secretsJson, secretNamesJson) {
+verify_secrets = async function (secretsJson, secretNamesJson, exclusions) {
 
   if (!secretsJson && !secretNamesJson) {
     core.setFailed("You must provide either the 'secrets' or 'secret_names' inputs")
@@ -69,7 +69,25 @@ let verify_secrets = async function (secretsJson, secretNamesJson) {
     core.info(referencedSecretName);
   }
 
+  exclusion_secret_names = new Set()
+
+  if (exclusions) {
+    
+    core.info('\nSecrets excluded from verification\n------------------------')
+    
+    exclusion_items = exclusions.split(',');
+
+    for(const exclusion_item of exclusion_items){
+      trimmed_exclusion_item = exclusion_item.trim();
+
+      core.info(trimmed_exclusion_item);
+      exclusion_secret_names.add(trimmed_exclusion_item);
+    }
+  }
+
   let missingSecretNames = new Set([...referencedSecretNames].filter(x => !secretNames.has(x)));
+  // Filter out excluded secret names
+  missingSecretNames = new Set([...missingSecretNames].filter(x => !exclusion_secret_names.has(x)));
 
   if (missingSecretNames.size > 0) {
     core.info('')

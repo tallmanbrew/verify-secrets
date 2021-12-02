@@ -23,6 +23,7 @@ jobs:
     - uses: ./
       with:
         secrets: ${{ toJSON(secrets) }}
+        exclusions: UNAVAILABLE_SECRET
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
@@ -45,6 +46,31 @@ jobs:
     - uses: ./
       with:
         secret_names: ${{ steps.secret_json_keys.outputs.json_keys }}
+        exclusions: UNAVAILABLE_SECRET
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
+    
+  test_secret_names_json_exclusions:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Get secret JSON keys
+      id: secret_json_keys
+      run: |
+        content=`echo '${{ toJSON(secrets) }}' | jq 'keys'`
+        # Squish JSON into one line
+        content="${content//'%'/'%25'}"
+        content="${content//$'\n'/'%0A'}"
+        content="${content//$'\r'/'%0D'}"
+        echo "::set-output name=json_keys::$content"
+
+    - uses: ./
+      with:
+        secret_names: ${{ steps.secret_json_keys.outputs.json_keys }}
+        exclusions: UNAVAILABLE_SECRET,SOME_OTHER_SECRET_TO_EXCLUDE
+    env:
+      SECRET_1: ${{ secrets.SECRET_1}}
+      SECRET_2: ${{ secrets.SECRET_2 }}
+      UNAVAILABLE_SECRET: ${{ secrets.UNAVAILABLE_SECRET }}

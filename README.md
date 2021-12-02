@@ -14,6 +14,7 @@ Sending in all the secret information
   uses: firenza/verify-secrets@v2
   with:
     secrets: ${{ toJSON(secrets) }}
+    exclusions: IGNORE_ME, IGNORE_ME_TOO
 ```
 
 Sending in just the secret names
@@ -39,6 +40,8 @@ Sending in just the secret names
 ```
 
 ## Inputs
-One of the two inputs is required
+  Either `secrets` or `secret_names` is required
+
 - `secrets`: JSON of built in `secrets` variable
 - `secret_names`: JSON of secret names from built in `secrets` variable
+- `exclusions`: A comma separated string of secret names to exclude from verification

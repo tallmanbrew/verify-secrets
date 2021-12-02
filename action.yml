@@ -11,6 +11,9 @@ inputs:
   secret_names:
     description: 'Secret name JSON'
     required: false
+  exclusions:
+    description: 'Comma separated string of secrets to skip verifying'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'
