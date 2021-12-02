@@ -78,8 +78,10 @@ verify_secrets = async function (secretsJson, secretNamesJson, exclusions) {
     exclusion_items = exclusions.split(',');
 
     for(const exclusion_item of exclusion_items){
-      core.info(exclusion_item);
-      exclusion_secret_names.add(exclusion_item);
+      trimmed_exclusion_item = exclusion_item.trim();
+
+      core.info(trimmed_exclusion_item);
+      exclusion_secret_names.add(trimmed_exclusion_item);
     }
   }
 
