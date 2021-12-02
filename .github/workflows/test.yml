@@ -26,6 +26,7 @@ jobs:
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
+      UNAVAILABLE_SECRET: ${{ secrets.UNAVAILABLE_SECRET }}
   
   test_secret_names_json:
     runs-on: ubuntu-latest
@@ -48,6 +49,7 @@ jobs:
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
+      UNAVAILABLE_SECRET: ${{ secrets.UNAVAILABLE_SECRET }}
     
   test_secret_names_json_exclusions:
     runs-on: ubuntu-latest
@@ -67,7 +69,8 @@ jobs:
     - uses: ./
       with:
         secret_names: ${{ steps.secret_json_keys.outputs.json_keys }}
-        exclusions: SECRET_1
+        exclusions: UNAVAILABLE_SECRET
     env:
       SECRET_1: ${{ secrets.SECRET_1}}
       SECRET_2: ${{ secrets.SECRET_2 }}
+      UNAVAILABLE_SECRET: ${{ secrets.UNAVAILABLE_SECRET }}
