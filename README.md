@@ -25,13 +25,7 @@ Sending in just the secret names
 
 - name: Get secret JSON keys
   id: secret_json_keys
-  run: |
-    content=`echo '${{ toJSON(secrets) }}' | jq 'keys'`
-    # Squish JSON into one line so it can be stored in an output var
-    content="${content//'%'/'%25'}"
-    content="${content//$'\n'/'%0A'}"
-    content="${content//$'\r'/'%0D'}"
-    echo "::set-output name=json_keys::$content"
+  run: echo ::set-output name=json_keys::$(echo '${{ toJSON(secrets) }}' | jq -c 'keys')
 
 - name: Verify Github Secrets
   uses: firenza/verify-secrets@v2
