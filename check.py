@@ -16,6 +16,8 @@ for filename in os.listdir(DIRECTORY):
     if filename.endswith(".yaml") or filename.endswith(".yml"):
          with open(os.path.join(DIRECTORY, filename), 'r') as f:
              for line in f:
+                 if line.startswith("#"):
+                     continue
                  res = re.search(r"\{\{(.*?)\}", line)
                  if (res and res.group(1) and 'secrets.' in res.group(1) and 'GITHUB_TOKEN' not in res.group(1)):
                     if (res.group(1).split(".")[1].strip() not in json_secrets):
