@@ -5,15 +5,9 @@ branding:
   icon: 'user'
   color: 'red'
 inputs:
-  access-token:  # id of input
-    description: 'Personal Access Token'
+  secrets:  # id of input
+    description: 'Github Secrets'
     required: true
-  repo:
-    description: 'Name of Repo to scan'
-    required: true
-  owner:
-    description: 'Repo Owner if Organization'
-    required: false
 runs:
   using: "composite"
   steps:
@@ -31,8 +25,6 @@ runs:
         pip3 install -r $GITHUB_ACTION_PATH/requirements.txt
         python3 $GITHUB_ACTION_PATH/check.py
       env:
-        TOKEN: ${{ inputs.access-token }}
-        OWNER: ${{ inputs.owner }}
-        REPO: ${{ inputs.repo }}
+        SECRETS: ${{ inputs.secrets }}
       shell: bash
       
