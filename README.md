@@ -5,7 +5,7 @@ If you use github secrets in your workflows use this action to verify all secret
 ## Usage
 ```yml
 - name: Verify Secrets
-  uses: tallmanbrew/verify-secrets@v1
+  uses: tallmanbrew/verify-secrets@v2
     with:
       secrets: ${{ toJSON(secrets) }}
 ```
