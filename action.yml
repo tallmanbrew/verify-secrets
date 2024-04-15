@@ -15,5 +15,5 @@ inputs:
     description: 'Comma separated string of secrets to skip verifying'
     required: false
 runs:
-  using: 'node12'
+  using: 'node20'
   main: 'dist/index.js'
