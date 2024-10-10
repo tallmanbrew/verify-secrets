@@ -15,10 +15,11 @@ runs:
       with:
         python-version: '3.12'
         cache: 'pip'
-    - run: |
-        pip install -r $GITHUB_ACTION_PATH/requirements.txt
-        python3 $GITHUB_ACTION_PATH/check.py
+    - shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install requests
+        python $GITHUB_ACTION_PATH/check.py
       env:
         SECRETS: ${{ inputs.secrets }}
-      shell: bash
       
