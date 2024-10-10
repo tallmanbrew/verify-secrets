@@ -11,18 +11,12 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - id: install-pipenv
-      name: Install pipenv
-      run: |
-        if ! command -v pip3 &> /dev/null
-        then
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-        fi
-      shell: bash
-
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
     - run: |
-        pip3 install -r $GITHUB_ACTION_PATH/requirements.txt
+        pip install -r $GITHUB_ACTION_PATH/requirements.txt
         python3 $GITHUB_ACTION_PATH/check.py
       env:
         SECRETS: ${{ inputs.secrets }}
