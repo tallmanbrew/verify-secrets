@@ -4,19 +4,20 @@ author: Chris Tallman
 branding:
   icon: 'user'
   color: 'red'
-inputs:
-  secrets:  # id of input
-    description: 'Github Secrets'
-    required: true
+# No inputs needed - everything is extracted from GitHub context
 runs:
   using: "composite"
   steps:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - shell: bash
+    - name: Install dependencies
+      shell: bash
+      run: pip install requests
+    - name: Verify secrets
+      shell: bash
       run: |
         python $GITHUB_ACTION_PATH/check.py
       env:
-        SECRETS: ${{ inputs.secrets }}
-      
+        GITHUB_CONTEXT: ${{ toJSON(github) }}
+        GITHUB_TOKEN: ${{ github.token }}
