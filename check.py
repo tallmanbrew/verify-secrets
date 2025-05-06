@@ -4,6 +4,7 @@ import sys
 import json
 import yaml
 import requests
+import glob
 from pathlib import Path
 
 def extract_secrets_from_workflow(file_path):
@@ -46,25 +47,50 @@ def check_secret_availability(secret_name):
     return False
 
 def get_current_workflow_path():
-    """Extract the current workflow file path from GitHub context."""
+    """Extract the current workflow file path from GitHub context and environment variables."""
     try:
+        # Method 1: Try getting from GITHUB_WORKFLOW and GITHUB_WORKSPACE
+        github_workflow = os.environ.get('GITHUB_WORKFLOW')
+        github_workspace = os.environ.get('GITHUB_WORKSPACE', os.getcwd())
+        
+        if github_workflow:
+            # Try common extensions
+            for ext in ['yml', 'yaml']:
+                workflow_path = os.path.join(github_workspace, '.github', 'workflows', f"{github_workflow}.{ext}")
+                if os.path.exists(workflow_path):
+                    return workflow_path
+                    
+            # Try looking for files containing the workflow name
+            workflow_files = glob.glob(os.path.join(github_workspace, '.github', 'workflows', '*.y*ml'))
+            for wf in workflow_files:
+                try:
+                    with open(wf, 'r') as f:
+                        content = yaml.safe_load(f)
+                        if content and 'name' in content and content['name'] == github_workflow:
+                            return wf
+                except:
+                    continue
+        
+        # Method 2: Try from github context
         github_context = json.loads(os.environ.get('GITHUB_CONTEXT', '{}'))
-        
-        # Get repository workspace path
-        workspace = os.environ.get('GITHUB_WORKSPACE', os.getcwd())
-        
-        # Get workflow info from context
         workflow_ref = github_context.get('workflow_ref', '')
-        if not workflow_ref:
-            print("Could not determine current workflow from GitHub context")
-            return None
-            
-        # Extract workflow file path from reference
-        # Format is typically: {owner}/{repo}/.github/workflows/{filename}@{ref}
-        parts = workflow_ref.split('/')
-        if len(parts) >= 3:
-            workflow_file = parts[-1].split('@')[0]  # Remove ref part
-            return os.path.join(workspace, '.github', 'workflows', workflow_file)
+        if workflow_ref:
+            parts = workflow_ref.split('/')
+            if len(parts) >= 3:
+                workflow_file = parts[-1].split('@')[0]  # Remove ref part
+                return os.path.join(github_workspace, '.github', 'workflows', workflow_file)
+        
+        # Method 3: Use GITHUB_EVENT_PATH to extract workflow information
+        event_path = os.environ.get('GITHUB_EVENT_PATH')
+        if event_path and os.path.exists(event_path):
+            try:
+                with open(event_path, 'r') as f:
+                    event_data = json.load(f)
+                    workflow_path = event_data.get('workflow', '')
+                    if workflow_path:
+                        return os.path.join(github_workspace, '.github', 'workflows', os.path.basename(workflow_path))
+            except:
+                pass
         
         return None
     except Exception as e:
@@ -72,13 +98,19 @@ def get_current_workflow_path():
         return None
 
 def get_repo_info_from_github_context():
-    """Extract repository owner and name from GitHub context."""
+    """Extract repository owner and name from GitHub context or environment variables."""
     try:
+        # First try from environment variables
+        github_repository = os.environ.get('GITHUB_REPOSITORY')
+        if github_repository and '/' in github_repository:
+            return github_repository.split('/')
+        
+        # Then try from GitHub context
         github_context = json.loads(os.environ.get('GITHUB_CONTEXT', '{}'))
         repository = github_context.get('repository', '')
-        if repository:
-            owner, repo = repository.split('/')
-            return owner, repo
+        if repository and '/' in repository:
+            return repository.split('/')
+            
         return None, None
     except Exception as e:
         print(f"Error extracting repository info: {e}")
@@ -92,7 +124,8 @@ def get_available_secrets_via_api(token=None):
     available_secrets = set(['GITHUB_TOKEN'])  # Built-in token always available
     
     if not token:
-        print("No GitHub token provided for API access. Skipping API-based secret verification.")
+        print("No GitHub token provided for API access or token lacks required permissions.")
+        print("Will rely on environment variable detection for secrets.")
         return available_secrets
     
     owner, repo = get_repo_info_from_github_context()
@@ -113,8 +146,11 @@ def get_available_secrets_via_api(token=None):
             secrets_data = response.json()
             for secret in secrets_data.get('secrets', []):
                 available_secrets.add(secret['name'])
+            print(f"✓ Successfully retrieved repository secrets")
+        elif response.status_code == 403:
+            print(f"❌ Permission denied when accessing repository secrets. Check token permissions.")
         else:
-            print(f"Failed to get repository secrets: {response.status_code}")
+            print(f"❌ Failed to get repository secrets: HTTP {response.status_code}")
     except Exception as e:
         print(f"Error fetching repository secrets: {e}")
     
@@ -133,10 +169,20 @@ def get_available_secrets_via_api(token=None):
         
     # Check environment secrets
     try:
-        # Get current environment name from GitHub context
-        github_context = json.loads(os.environ.get('GITHUB_CONTEXT', '{}'))
-        environment = os.environ.get('GITHUB_ENV') or github_context.get('event', {}).get('deployment', {}).get('environment')
+        # Get current environment name from GitHub context or environment variables
+        environment = os.environ.get('GITHUB_ENVIRONMENT')
         
+        # If the environment variable isn't set directly, try to extract from context
+        if not environment:
+            github_context = json.loads(os.environ.get('GITHUB_CONTEXT', '{}'))
+            environment = github_context.get('event', {}).get('deployment', {}).get('environment')
+        
+        # If still not found, check if GITHUB_ENV is set (this is likely NOT the environment name)
+        # This appears to be an error in your current implementation
+        if not environment:
+            # Don't use GITHUB_ENV, it's not the environment name
+            pass
+            
         if environment:
             print(f"Checking secrets for environment: {environment}")
             env_secrets_url = f"https://api.github.com/repos/{owner}/{repo}/environments/{environment}/secrets"
@@ -145,8 +191,11 @@ def get_available_secrets_via_api(token=None):
                 secrets_data = response.json()
                 for secret in secrets_data.get('secrets', []):
                     available_secrets.add(secret['name'])
+                print(f"✓ Successfully retrieved environment secrets for '{environment}'")
+            elif response.status_code == 404:
+                print(f"❌ Environment '{environment}' not found")
             else:
-                print(f"Failed to get environment secrets: {response.status_code}")
+                print(f"❌ Failed to get environment secrets: HTTP {response.status_code}")
     except Exception as e:
         print(f"Error fetching environment secrets: {e}")
     
@@ -175,46 +224,92 @@ def extract_environment_from_workflow(file_path):
         print(f"Error extracting environment from workflow: {e}")
         return set()
 
+def extract_secrets_from_all_workflows(workflow_dir=None):
+    """Find all workflow files and extract referenced secrets from them."""
+    if not workflow_dir:
+        workspace = os.environ.get('GITHUB_WORKSPACE', os.getcwd())
+        workflow_dir = os.path.join(workspace, '.github', 'workflows')
+    
+    if not os.path.exists(workflow_dir):
+        print(f"Workflow directory not found: {workflow_dir}")
+        return set()
+    
+    all_secrets = set()
+    workflow_files = glob.glob(os.path.join(workflow_dir, '*.yml')) + glob.glob(os.path.join(workflow_dir, '*.yaml'))
+    
+    for file_path in workflow_files:
+        file_secrets = extract_secrets_from_workflow(file_path)
+        all_secrets.update(file_secrets)
+        print(f"Processed {os.path.basename(file_path)}: Found {len(file_secrets)} secret(s)")
+    
+    return all_secrets
+
+def fallback_secret_detection():
+    """Use environment-based heuristics to detect available secrets."""
+    available_secrets = set(['GITHUB_TOKEN'])  # Built-in token always available
+    
+    # Check environment variables that might indicate secrets
+    for env_var in os.environ:
+        # Check for common patterns of secret environment variables
+        if any(marker in env_var for marker in ['TOKEN', 'SECRET', 'PASSWORD', 'KEY', 'AUTH']):
+            available_secrets.add(env_var)
+        
+        # Check for GitHub's secret mapping format
+        if env_var.startswith('SECRET_'):
+            available_secrets.add(env_var[7:])
+    
+    return available_secrets
+
 def main():
     # Get current workflow file
     current_workflow = get_current_workflow_path()
     
     if not current_workflow or not os.path.exists(current_workflow):
         print("Could not find current workflow file.")
-        print(f"Attempting to use local workflow file...")
+        print("Attempting to scan all workflow files...")
         
-        # Fall back to using any workflow file in .github/workflows
-        workflow_files = list(Path('.github/workflows').glob('*.yml'))
-        if not workflow_files:
-            workflow_files = list(Path('.github/workflows').glob('*.yaml'))
+        # Fall back to checking all workflow files
+        workspace = os.environ.get('GITHUB_WORKSPACE', os.getcwd())
+        workflow_dir = os.path.join(workspace, '.github', 'workflows')
         
-        if not workflow_files:
-            print("No workflow files found.")
+        if not os.path.isdir(workflow_dir):
+            print(f"❌ ERROR: Workflow directory not found at {workflow_dir}")
             sys.exit(1)
             
-        current_workflow = str(workflow_files[0])
+        referenced_secrets = extract_secrets_from_all_workflows(workflow_dir)
+        if not referenced_secrets:
+            print("✅ No secrets referenced in any workflow files.")
+            return
+    else:
+        print(f"Analyzing workflow: {current_workflow}")
+        # Extract referenced secrets from workflow
+        referenced_secrets = extract_secrets_from_workflow(current_workflow)
     
-    print(f"Analyzing workflow: {current_workflow}")
-    
-    # Extract referenced secrets from workflow
-    referenced_secrets = extract_secrets_from_workflow(current_workflow)
     print(f"Found {len(referenced_secrets)} secret reference(s):")
     for secret in sorted(referenced_secrets):
         print(f"  - {secret}")
     
+    if not referenced_secrets:
+        print("✅ No secrets referenced, nothing to verify!")
+        return
+    
     # Extract environment names from workflow if present
-    environments = extract_environment_from_workflow(current_workflow)
-    if environments:
-        print(f"Found environments in workflow: {', '.join(environments)}")
-        # Set environment variables to check environment-specific secrets
-        for env in environments:
-            os.environ['GITHUB_ENV'] = env
+    environments = set()
+    if current_workflow and os.path.exists(current_workflow):
+        environments = extract_environment_from_workflow(current_workflow)
+        if environments:
+            print(f"Found environments in workflow: {', '.join(environments)}")
     
     # Get GitHub token for API access
     github_token = os.environ.get('GITHUB_TOKEN', None)
     
-    # Get available secrets using GitHub API (if token available)
+    # Try to get available secrets using GitHub API first
     available_secrets = get_available_secrets_via_api(github_token)
+    
+    # If API check failed or had limited results, fall back to environment-based detection
+    if len(available_secrets) <= 1:  # Only built-in token detected
+        print("Falling back to environment-based secret detection...")
+        available_secrets.update(fallback_secret_detection())
     
     # Check each referenced secret
     missing_secrets = []
@@ -229,14 +324,13 @@ def main():
             print(f"  - {secret}")
         
         print("\nConsider adding these secrets to your GitHub repository or organization.")
-        if not github_token:
-            print("\nNote: For more accurate results, add admin:org permission to your workflow:")
-            print("""
+        print("\nNote: For more accurate results, ensure your workflow has proper permissions:")
+        print("""
 permissions:
   contents: read
   id-token: write  # For accessing repository and organization secrets
 """)
-            sys.exit(1)
+        sys.exit(1)
     else:
         print("\n✅ All referenced secrets appear to be available!")
 
