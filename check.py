@@ -5,6 +5,7 @@ import json
 import yaml
 import requests
 import glob
+import subprocess
 from pathlib import Path
 
 def extract_secrets_from_workflow(file_path):
@@ -119,18 +120,18 @@ def get_repo_info_from_github_context():
 def get_available_secrets_via_api(token=None):
     """
     Use GitHub API to get available secrets (just names, not values).
-    Requires a GitHub token with appropriate permissions.
+    Note: Most GitHub tokens don't have permissions to list secrets.
+    This function will likely fail but we try anyway in case the token has elevated permissions.
     """
     available_secrets = set(['GITHUB_TOKEN'])  # Built-in token always available
     
     if not token:
-        print("No GitHub token provided for API access or token lacks required permissions.")
-        print("Will rely on environment variable detection for secrets.")
+        print("No GitHub token provided for API access.")
         return available_secrets
     
     owner, repo = get_repo_info_from_github_context()
     if not owner or not repo:
-        print("Could not determine repository owner/name. Skipping API-based secret verification.")
+        print("Could not determine repository owner/name.")
         return available_secrets
     
     headers = {
@@ -138,7 +139,7 @@ def get_available_secrets_via_api(token=None):
         'Authorization': f'token {token}'
     }
     
-    # Check repository secrets
+    # Try to get repository secrets (likely to fail due to permissions)
     try:
         repo_secrets_url = f"https://api.github.com/repos/{owner}/{repo}/actions/secrets"
         response = requests.get(repo_secrets_url, headers=headers)
@@ -148,56 +149,105 @@ def get_available_secrets_via_api(token=None):
                 available_secrets.add(secret['name'])
             print(f"✓ Successfully retrieved repository secrets")
         elif response.status_code == 403:
-            print(f"❌ Permission denied when accessing repository secrets. Check token permissions.")
+            # This is expected - most tokens don't have permission to list secrets
+            print(f"ℹ️ Standard GitHub token doesn't have permission to list secrets (HTTP 403)")
         else:
             print(f"❌ Failed to get repository secrets: HTTP {response.status_code}")
     except Exception as e:
         print(f"Error fetching repository secrets: {e}")
     
-    # Check organization secrets (if applicable)
+    # The API calls for org and environment secrets will likely fail too
+    # Skipping those attempts to reduce noise in the logs
+    
+    return available_secrets
+
+def get_available_secrets_via_github_cli():
+    """
+    Use GitHub CLI to get available secrets (just names, not values).
+    GitHub CLI may have different permissions than the API when using default tokens.
+    """
+    available_secrets = set(['GITHUB_TOKEN'])  # Built-in token always available
+    
+    # Check if GitHub CLI is installed
     try:
-        org_secrets_url = f"https://api.github.com/orgs/{owner}/actions/secrets"
-        response = requests.get(org_secrets_url, headers=headers)
-        if response.status_code == 200:
-            secrets_data = response.json()
-            for secret in secrets_data.get('secrets', []):
-                available_secrets.add(secret['name'])
-        elif response.status_code != 404:  # 404 is expected if not an org
-            print(f"Failed to get organization secrets: {response.status_code}")
+        subprocess.run(['gh', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except (subprocess.SubprocessError, FileNotFoundError):
+        print("GitHub CLI (gh) not found. Cannot use CLI to list secrets.")
+        return available_secrets
+    
+    owner, repo = get_repo_info_from_github_context()
+    if not owner or not repo:
+        print("Could not determine repository owner/name.")
+        return available_secrets
+        
+    repo_full_name = f"{owner}/{repo}"
+    
+    # Try to get repository secrets
+    try:
+        result = subprocess.run(
+            ['gh', 'secret', 'list', '-R', repo_full_name], 
+            check=False,  # Don't raise exception on non-zero exit
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        # Check if command succeeded
+        if result.returncode == 0:
+            # Parse output - format is: NAME UPDATED_AT
+            for line in result.stdout.strip().split('\n'):
+                if line and not line.startswith('NAME'):  # Skip header
+                    secret_name = line.split()[0].strip()
+                    available_secrets.add(secret_name)
+            print(f"✓ Successfully retrieved repository secrets via GitHub CLI")
+        else:
+            print(f"ℹ️ GitHub CLI couldn't list repository secrets: {result.stderr.strip()}")
     except Exception as e:
-        print(f"Error fetching organization secrets: {e}")
-        
-    # Check environment secrets
+        print(f"Error using GitHub CLI to fetch repository secrets: {e}")
+    
+    # Try to get organization secrets
     try:
-        # Get current environment name from GitHub context or environment variables
-        environment = os.environ.get('GITHUB_ENVIRONMENT')
+        result = subprocess.run(
+            ['gh', 'secret', 'list', '-o', owner], 
+            check=False,
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            text=True
+        )
         
-        # If the environment variable isn't set directly, try to extract from context
-        if not environment:
-            github_context = json.loads(os.environ.get('GITHUB_CONTEXT', '{}'))
-            environment = github_context.get('event', {}).get('deployment', {}).get('environment')
-        
-        # If still not found, check if GITHUB_ENV is set (this is likely NOT the environment name)
-        # This appears to be an error in your current implementation
-        if not environment:
-            # Don't use GITHUB_ENV, it's not the environment name
+        if result.returncode == 0:
+            for line in result.stdout.strip().split('\n'):
+                if line and not line.startswith('NAME'):
+                    secret_name = line.split()[0].strip()
+                    available_secrets.add(secret_name)
+            print(f"✓ Successfully retrieved organization secrets via GitHub CLI")
+        else:
+            # This might fail if not an org or no permission - that's expected
             pass
-            
-        if environment:
-            print(f"Checking secrets for environment: {environment}")
-            env_secrets_url = f"https://api.github.com/repos/{owner}/{repo}/environments/{environment}/secrets"
-            response = requests.get(env_secrets_url, headers=headers)
-            if response.status_code == 200:
-                secrets_data = response.json()
-                for secret in secrets_data.get('secrets', []):
-                    available_secrets.add(secret['name'])
-                print(f"✓ Successfully retrieved environment secrets for '{environment}'")
-            elif response.status_code == 404:
-                print(f"❌ Environment '{environment}' not found")
-            else:
-                print(f"❌ Failed to get environment secrets: HTTP {response.status_code}")
     except Exception as e:
-        print(f"Error fetching environment secrets: {e}")
+        # Ignore errors for org secrets - might not be applicable
+        pass
+            
+    # Try to get environment secrets if environments were found
+    for env_name in extract_environment_names():
+        try:
+            result = subprocess.run(
+                ['gh', 'secret', 'list', '-R', repo_full_name, '-e', env_name], 
+                check=False,
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    if line and not line.startswith('NAME'):
+                        secret_name = line.split()[0].strip()
+                        available_secrets.add(secret_name)
+                print(f"✓ Successfully retrieved secrets for environment '{env_name}' via GitHub CLI")
+        except Exception:
+            # Ignore errors for specific environments
+            pass
     
     return available_secrets
 
@@ -260,6 +310,26 @@ def fallback_secret_detection():
     
     return available_secrets
 
+def extract_environment_names():
+    """Extract all environment names from workflows."""
+    environments = set()
+    
+    # Get current workflow path
+    current_workflow = get_current_workflow_path()
+    if current_workflow and os.path.exists(current_workflow):
+        environments.update(extract_environment_from_workflow(current_workflow))
+    
+    # Also check all workflows to be thorough
+    workspace = os.environ.get('GITHUB_WORKSPACE', os.getcwd())
+    workflow_dir = os.path.join(workspace, '.github', 'workflows')
+    if os.path.isdir(workflow_dir):
+        workflow_files = glob.glob(os.path.join(workflow_dir, '*.yml')) + \
+                         glob.glob(os.path.join(workflow_dir, '*.yaml'))
+        for wf in workflow_files:
+            environments.update(extract_environment_from_workflow(wf))
+    
+    return environments
+
 def main():
     # Get current workflow file
     current_workflow = get_current_workflow_path()
@@ -303,13 +373,25 @@ def main():
     # Get GitHub token for API access
     github_token = os.environ.get('GITHUB_TOKEN', None)
     
-    # Try to get available secrets using GitHub API first
-    available_secrets = get_available_secrets_via_api(github_token)
+    # First try GitHub CLI which might have different permissions
+    print("Attempting to verify secrets using GitHub CLI...")
+    available_secrets = get_available_secrets_via_github_cli()
     
-    # If API check failed or had limited results, fall back to environment-based detection
+    # If GitHub CLI failed or found limited results, try the API approach
     if len(available_secrets) <= 1:  # Only built-in token detected
-        print("Falling back to environment-based secret detection...")
-        available_secrets.update(fallback_secret_detection())
+        print("Attempting to verify secrets via API (note: standard GitHub token can't list secrets)")
+        available_secrets.update(get_available_secrets_via_api(github_token))
+    
+    # Since both approaches may fail, always use environment-based detection
+    print("Using environment-based secret detection...")
+    available_secrets.update(fallback_secret_detection())
+    
+    # For standard workflows, assume common GitHub secrets are available
+    available_secrets.update([
+        'GITHUB_TOKEN',
+        'ACTIONS_RUNTIME_TOKEN',
+        'ACTIONS_ID_TOKEN_REQUEST_TOKEN'
+    ])
     
     # Check each referenced secret
     missing_secrets = []
@@ -323,16 +405,14 @@ def main():
         for secret in sorted(missing_secrets):
             print(f"  - {secret}")
         
-        print("\nConsider adding these secrets to your GitHub repository or organization.")
-        print("\nNote: For more accurate results, ensure your workflow has proper permissions:")
-        print("""
-permissions:
-  contents: read
-  id-token: write  # For accessing repository and organization secrets
-""")
+        print("\nPlease verify these secrets exist in your repository, organization, or environment settings.")
+        print("\nNOTE: GitHub Actions doesn't allow listing secrets via API with standard tokens.")
+        print("This check uses heuristics and may produce false positives.")
         sys.exit(1)
     else:
         print("\n✅ All referenced secrets appear to be available!")
+        print("NOTE: GitHub Actions doesn't allow listing secrets via API with standard tokens.")
+        print("This check uses heuristics and may not catch all missing secrets.")
 
 if __name__ == "__main__":
     main()

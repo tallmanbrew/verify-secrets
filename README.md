@@ -1,14 +1,14 @@
 # GitHub Action: Verify Secrets
 
-This action will verify all secrets used in your workflow files are defined as GitHub secrets.
+This action will verify all secrets referenced in your workflow files, checking if they appear to be available in your GitHub environment.
 
 ## Features
 
 - Automatically detects secrets referenced with `${{ secrets.SECRET_NAME }}` syntax
-- Verifies secrets exist at repository, organization, and environment level
+- Provides best-effort verification that secrets exist in your environment
 - No configuration required - just add the action to your workflow
 - Supports GitHub's built-in secrets like `GITHUB_TOKEN`
-- Detects environment-specific secrets
+- Works with repository, organization, and environment secrets
 
 ## Usage
 
@@ -18,21 +18,24 @@ Add this step to your workflow file:
 - uses: christallman/verify-secrets@v1
 ```
 
-For best results, add the following permissions to your workflow:
-
-```yaml
-permissions:
-  contents: read
-  id-token: write  # Needed for accessing repository, organization and environment secrets
-```
-
 ## How It Works
 
 The action:
 1. Analyzes the current workflow file to find all secret references
-2. Checks which secrets are available in your GitHub environment 
-3. Reports any secrets that are referenced but not defined
-4. Provides clear instructions on how to fix missing secrets
+2. Uses heuristics to determine which secrets might be available in your GitHub environment
+3. Reports any secrets that are referenced but might be missing
+4. Provides clear guidance on how to add missing secrets
+
+## Limitations
+
+Due to GitHub's security model:
+
+- Standard GitHub tokens cannot list secrets via the API (by design)
+- The action uses environment-based heuristics to guess which secrets are available
+- False positives may occur (warning about secrets that actually exist)
+- False negatives are possible (not warning about truly missing secrets)
+
+These limitations are fundamental to GitHub's security architecture, which intentionally restricts access to information about available secrets.
 
 ## Example
 
@@ -42,10 +45,6 @@ name: Example Workflow
 on:
   push:
     branches: [ main ]
-
-permissions:
-  contents: read
-  id-token: write  # Needed for secret verification
 
 jobs:
   verify-secrets:
@@ -67,8 +66,8 @@ jobs:
 
 This action:
 - Never exposes secret values
-- Only reports on the existence (or lack thereof) of secrets
-- Uses GitHub's API to check if secrets exist, not their values
+- Only reports on the potential existence (or lack thereof) of secrets
+- Uses best-effort methods to check if secrets might be available
 - Requires minimal permissions to function
 
 ## License
