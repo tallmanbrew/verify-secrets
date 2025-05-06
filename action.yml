@@ -25,7 +25,12 @@ runs:
     - name: Authenticate GitHub CLI
       shell: bash
       run: |
-        echo "$GITHUB_TOKEN" | gh auth login --with-token
+        # Store token in a temporary variable
+        GH_TOKEN="${GITHUB_TOKEN}"
+        # Unset GITHUB_TOKEN to avoid GitHub CLI error
+        unset GITHUB_TOKEN
+        # Authenticate with the stored token
+        echo "$GH_TOKEN" | gh auth login --with-token
       env:
         GITHUB_TOKEN: ${{ github.token }}
     
