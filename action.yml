@@ -13,7 +13,7 @@ runs:
         python-version: '3.12'
     - name: Install dependencies
       shell: bash
-      run: pip install requests
+      run: pip install requests PyYAML
     - name: Verify secrets
       shell: bash
       run: |

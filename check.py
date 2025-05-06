@@ -230,11 +230,11 @@ def main():
         
         print("\nConsider adding these secrets to your GitHub repository or organization.")
         if not github_token:
-            print("\nNote: For more accurate results, add permissions for 'secrets' to your workflow:")
+            print("\nNote: For more accurate results, add admin:org permission to your workflow:")
             print("""
 permissions:
   contents: read
-  secrets: read  # Add this line
+  id-token: write  # For accessing repository and organization secrets
 """)
             sys.exit(1)
     else:
