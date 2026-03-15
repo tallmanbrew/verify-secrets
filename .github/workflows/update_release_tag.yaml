@@ -20,3 +20,19 @@ jobs:
               sha: context.sha,
               force: true,
             });
+            try {
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: "tags/v2.0.1",
+                sha: context.sha,
+                force: true,
+              });
+            } catch (e) {
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: "refs/tags/v2.0.1",
+                sha: context.sha,
+              });
+            }
