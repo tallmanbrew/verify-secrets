@@ -7,9 +7,11 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Update Major Version Tag
         uses: actions/github-script@v7
@@ -37,11 +39,27 @@ jobs:
             });
             const sha = tagRef.data.object.sha;
             const majorTag = match[1];
-            await github.rest.git.updateRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `tags/${majorTag}`,
-              sha: sha,
-              force: true,
-            });
-            console.log(`Updated ${majorTag} to point to ${sha} (${tagName})`);
+            try {
+              // updateRef uses short ref format (tags/...) per GitHub API
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `tags/${majorTag}`,
+                sha: sha,
+                force: true,
+              });
+              console.log(`Updated ${majorTag} to point to ${sha} (${tagName})`);
+            } catch (err) {
+              if (err.status === 422) {
+                // createRef requires full ref format (refs/tags/...) per GitHub API
+                await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/tags/${majorTag}`,
+                  sha: sha,
+                });
+                console.log(`Created ${majorTag} pointing to ${sha} (${tagName})`);
+              } else {
+                throw err;
+              }
+            }
