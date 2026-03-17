@@ -1,5 +1,7 @@
 name: Update Release Tag
 on:
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -9,30 +11,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update Release Tag
+      - name: Update Major Version Tag
         uses: actions/github-script@v7
         with:
           script: |
+            let tagName;
+            if (context.payload.release) {
+              tagName = context.payload.release.tag_name;
+            } else {
+              const latestRelease = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              tagName = latestRelease.data.tag_name;
+            }
+            const match = tagName.match(/^(v\d+)\./);
+            if (!match) {
+              console.log(`Tag ${tagName} does not match expected semver format, skipping`);
+              return;
+            }
+            const tagRef = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `tags/${tagName}`,
+            });
+            const sha = tagRef.data.object.sha;
+            const majorTag = match[1];
             await github.rest.git.updateRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: "tags/v2",
-              sha: context.sha,
+              ref: `tags/${majorTag}`,
+              sha: sha,
               force: true,
             });
-            try {
-              await github.rest.git.updateRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: "tags/v2.0.1",
-                sha: context.sha,
-                force: true,
-              });
-            } catch (e) {
-              await github.rest.git.createRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: "refs/tags/v2.0.1",
-                sha: context.sha,
-              });
-            }
+            console.log(`Updated ${majorTag} to point to ${sha} (${tagName})`);
